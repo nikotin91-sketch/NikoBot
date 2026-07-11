@@ -10,9 +10,11 @@ from config import (
 def send_message(message):
 
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+
         print(
             "Telegram ayarları eksik"
         )
+
         return False
 
 
@@ -42,7 +44,18 @@ def send_message(message):
         )
 
 
-        return response.status_code == 200
+        if response.status_code == 200:
+
+            return True
+
+
+        print(
+            "Telegram cevap:",
+            response.text
+        )
+
+        return False
+
 
 
     except Exception as e:
@@ -68,7 +81,6 @@ def format_signal(data):
 
 
     text = f"""
-
 🚀 <b>AI BUY SİNYALİ</b>
 
 
@@ -103,8 +115,17 @@ Neden:
 
 Risk/Ödül:
 {data['risk_reward']}
-
 """
 
-
     return text
+
+
+
+
+# Telegram bağlantı testi
+
+if __name__ == "__main__":
+
+    send_message(
+        "🚀 BTCTurk AI Scanner Telegram testi başarılı!"
+    )
