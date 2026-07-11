@@ -41,7 +41,19 @@ def create_headers():
     ).decode("utf-8")
 
 
-    headers = {
+    print("API KEY VAR:", bool(API_KEY))
+    print("SECRET VAR:", bool(SECRET))
+
+    print("KEY UZUNLUK:", len(API_KEY))
+    print("SECRET UZUNLUK:", len(SECRET))
+
+    print("KEY BAS:", API_KEY[:6])
+    print("SECRET BAS:", SECRET[:6])
+
+    print("NONCE:", nonce)
+
+
+    return {
 
         "X-PCK": API_KEY,
 
@@ -52,13 +64,6 @@ def create_headers():
         "Content-Type": "application/json"
 
     }
-
-
-    print("API KEY VAR:", bool(API_KEY))
-    print("SECRET VAR:", bool(SECRET))
-    print("NONCE:", nonce)
-
-    return headers
 
 
 
