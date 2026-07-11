@@ -25,7 +25,6 @@ from config import (
 app = Flask(__name__)
 
 
-
 @app.route("/")
 def home():
 
@@ -35,29 +34,41 @@ def home():
 
 def bot_loop():
 
-    print(
-        "🚀 BTCTurk AI Scanner V3 Başladı"
-    )
+    print("🚀 BTCTurk AI Scanner V3 Başladı")
+
+    print("BOT DÖNGÜSÜ BAŞLADI")
 
 
     create_tables()
+
+    print("DATABASE HAZIR")
 
 
     while True:
 
         try:
 
-            print(
-                "Piyasa taranıyor..."
-            )
+            print("Piyasa taranıyor...")
 
 
             signals = scan_market()
 
 
+            print(
+                "Bulunan sinyal:",
+                len(signals)
+            )
+
+
             if signals:
 
                 for signal in signals:
+
+                    print(
+                        "Sinyal:",
+                        signal
+                    )
+
 
                     save_signal(
                         signal
@@ -89,10 +100,16 @@ def bot_loop():
             )
 
 
+        print(
+            "Bekleme:",
+            SCAN_INTERVAL,
+            "saniye"
+        )
+
+
         time.sleep(
             SCAN_INTERVAL
         )
-
 
 
 
@@ -100,8 +117,10 @@ if __name__ == "__main__":
 
 
     thread = threading.Thread(
-        target=bot_loop
+        target=bot_loop,
+        daemon=True
     )
+
 
     thread.start()
 
