@@ -40,6 +40,7 @@ def create_tables():
     """)
 
 
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS trades (
 
@@ -59,6 +60,7 @@ def create_tables():
 
     )
     """)
+
 
 
     conn.commit()
@@ -89,19 +91,57 @@ def save_signal(data):
         """,
 
         (
-
-        data["symbol"],
-
-        data["signal"],
-
-        data["score"],
-
-        data["price"],
-
-        datetime.now().isoformat()
-
+            data["symbol"],
+            data["signal"],
+            data["score"],
+            data["price"],
+            datetime.now().isoformat()
         )
+    )
 
+
+    conn.commit()
+
+    conn.close()
+
+
+
+
+def save_trade(
+    symbol,
+    side,
+    price,
+    amount,
+    status
+):
+
+    conn = connect()
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO trades
+        (
+        symbol,
+        side,
+        price,
+        amount,
+        status,
+        time
+        )
+        VALUES (?,?,?,?,?,?)
+        """,
+
+        (
+            symbol,
+            side,
+            price,
+            amount,
+            status,
+            datetime.now().isoformat()
+        )
     )
 
 
@@ -129,11 +169,38 @@ def recent_signal(symbol):
         """,
 
         (symbol,)
-
     )
 
 
     result = cursor.fetchone()
+
+
+    conn.close()
+
+
+    return result
+
+
+
+
+def get_trades():
+
+    conn = connect()
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM trades
+        ORDER BY id DESC
+        """
+    )
+
+
+    result = cursor.fetchall()
+
 
     conn.close()
 
