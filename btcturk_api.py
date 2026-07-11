@@ -5,6 +5,11 @@ import pandas as pd
 BASE_URL = "https://api.btcturk.com"
 
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+
 
 def get_markets():
 
@@ -12,7 +17,7 @@ def get_markets():
 
 
     print(
-        "BtcTurk market verisi isteniyor..."
+        "BtcTurk market isteği gönderiliyor..."
     )
 
 
@@ -20,48 +25,45 @@ def get_markets():
 
         response = requests.get(
             url,
-            timeout=10
+            headers=HEADERS,
+            timeout=(5, 15)
         )
 
 
         print(
-            "Market cevap kodu:",
+            "Market HTTP:",
             response.status_code
+        )
+
+
+        print(
+            "Market cevap uzunluğu:",
+            len(response.text)
         )
 
 
         data = response.json()
 
 
-        print(
-            "Market verisi alındı"
+        symbols = (
+            data
+            .get("data", {})
+            .get("symbols", [])
         )
 
 
         markets = []
 
 
-        symbols = data.get(
-            "data",
-            {}
-        ).get(
-            "symbols",
-            []
-        )
-
-
         for item in symbols:
 
-            symbol = item.get(
-                "name"
-            )
+            symbol = item.get("name")
 
 
             if symbol and symbol.endswith("TRY"):
 
-                markets.append(
-                    symbol
-                )
+                markets.append(symbol)
+
 
 
         print(
@@ -74,11 +76,20 @@ def get_markets():
 
 
 
+    except requests.exceptions.Timeout:
+
+        print(
+            "Market isteği zaman aşımına uğradı"
+        )
+
+        return []
+
+
     except Exception as e:
 
         print(
-            "Market çekme hatası:",
-            e
+            "Market hatası:",
+            repr(e)
         )
 
         return []
@@ -107,13 +118,10 @@ def get_ohlc(symbol, limit=100):
     try:
 
         response = requests.get(
-
             url,
-
             params=params,
-
-            timeout=10
-
+            headers=HEADERS,
+            timeout=(5, 15)
         )
 
 
@@ -126,35 +134,25 @@ def get_ohlc(symbol, limit=100):
         )
 
 
-
         if not candles:
 
             return pd.DataFrame()
 
 
 
-        df = pd.DataFrame(
+        return pd.DataFrame(
             candles
         )
-
-
-        return df
 
 
 
     except Exception as e:
 
-
         print(
-
             symbol,
-
-            "mum hatası:",
-
-            e
-
+            "OHLC hatası:",
+            repr(e)
         )
-
 
         return pd.DataFrame()
 
@@ -168,9 +166,7 @@ def get_price(symbol):
     url = f"{BASE_URL}/api/v2/ticker"
 
 
-
     try:
-
 
         response = requests.get(
 
@@ -180,7 +176,9 @@ def get_price(symbol):
                 "pairSymbol": symbol
             },
 
-            timeout=10
+            headers=HEADERS,
+
+            timeout=(5, 15)
 
         )
 
@@ -188,24 +186,17 @@ def get_price(symbol):
         data = response.json()
 
 
-
         return float(
-
             data["data"][0]["last"]
-
         )
-
 
 
     except Exception as e:
 
 
         print(
-
             "Fiyat hatası:",
-
-            e
-
+            repr(e)
         )
 
 
