@@ -1,4 +1,6 @@
 import time
+import threading
+from flask import Flask
 
 from database import (
     create_tables,
@@ -19,8 +21,17 @@ from config import (
 )
 
 
+app = Flask(__name__)
 
-def main():
+
+@app.route("/")
+def home():
+
+    return "BTCTurk AI Scanner V3 aktif"
+
+
+
+def bot_loop():
 
     print(
         "🚀 BTCTurk AI Scanner V3 Başladı"
@@ -44,9 +55,7 @@ def main():
 
             if signals:
 
-
                 for signal in signals:
-
 
                     save_signal(
                         signal
@@ -85,7 +94,17 @@ def main():
 
 
 
-
 if __name__ == "__main__":
 
-    main()
+
+    thread = threading.Thread(
+        target=bot_loop
+    )
+
+    thread.start()
+
+
+    app.run(
+        host="0.0.0.0",
+        port=10000
+    )
