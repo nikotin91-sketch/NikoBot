@@ -8,24 +8,12 @@ from btcturk_api import (
     get_price
 )
 
-from btcturk_account import (
-    get_balance
-)
-
 from indicators import (
     add_indicators,
     get_latest_analysis
 )
 
 from ai_engine import analyze
-
-from risk_manager import (
-    calculate_position_size
-)
-
-from trade_engine import (
-    execute_buy
-)
 
 
 def scan_market():
@@ -41,6 +29,7 @@ def scan_market():
 
     signals = []
 
+
     for symbol in markets:
 
         try:
@@ -50,13 +39,13 @@ def scan_market():
                 symbol
             )
 
+
             df = get_ohlc(symbol)
 
-            if df is None:
+
+            if df is None or df.empty:
                 continue
 
-            if df.empty:
-                continue
 
             required_columns = [
                 "open",
@@ -64,6 +53,7 @@ def scan_market():
                 "low",
                 "close"
             ]
+
 
             if not all(
                 col in df.columns
@@ -77,8 +67,12 @@ def scan_market():
 
                 continue
 
+
+
             for col in required_columns:
                 df[col] = df[col].astype(float)
+
+
 
             if len(df) < 60:
 
@@ -90,35 +84,50 @@ def scan_market():
 
                 continue
 
+
+
             df = add_indicators(df)
 
+
             data = get_latest_analysis(df)
+
 
             if not data:
                 continue
 
-            # CANLI FİYATI TICKER'DAN AL
+
+
             live_price = get_price(symbol)
 
+
             if live_price is not None:
+
                 data["price"] = live_price
 
+
+
             result = analyze(data)
+
 
             if not result:
                 continue
 
+
+
             result["symbol"] = symbol
+
 
             score = result.get(
                 "score",
                 0
             )
 
+
             price = result.get(
                 "price",
                 0
             )
+
 
             print(
                 symbol,
@@ -128,42 +137,15 @@ def scan_market():
                 price
             )
 
-            if score >= 85:
 
-                try:
 
-                    balance = get_balance(
-                        "TRY"
-                    )
-
-                    amount = calculate_position_size(
-                        balance,
-                        price
-                    )
-
-                    execute_buy(
-                        symbol,
-                        price,
-                        amount
-                    )
-
-                    print(
-                        "ALIM:",
-                        symbol
-                    )
-
-                except Exception as e:
-
-                    print(
-                        "TRADE HATASI:",
-                        e
-                    )
-
+            # SADECE SİNYAL ÜRET
             if score >= 70:
 
                 signals.append(
                     result
                 )
+
 
                 print(
                     "SİNYAL:",
@@ -171,6 +153,7 @@ def scan_market():
                     result.get("signal"),
                     score
                 )
+
 
         except Exception as e:
 
@@ -180,17 +163,22 @@ def scan_market():
                 str(e)
             )
 
+
+
     signals.sort(
-        key=lambda x: x.get("score", 0),
+        key=lambda x: x.get("score",0),
         reverse=True
     )
+
 
     print(
         "TOPLAM SİNYAL:",
         len(signals)
     )
 
+
     return signals[:10]
+
 
 
 def run():
@@ -201,13 +189,16 @@ def run():
 
             results = scan_market()
 
+
             print(
                 "GÜÇLÜ FIRSATLAR:"
             )
 
+
             for item in results:
 
                 print(item)
+
 
         except Exception as e:
 
@@ -216,9 +207,11 @@ def run():
                 e
             )
 
+
         time.sleep(
             SCAN_INTERVAL
         )
+
 
 
 if __name__ == "__main__":
