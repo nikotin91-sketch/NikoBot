@@ -14,6 +14,14 @@ from indicators import (
 
 from ai_engine import analyze
 
+from risk_manager import (
+    calculate_position_size
+)
+
+from trade_engine import (
+    execute_buy
+)
+
 
 
 def scan_market():
@@ -53,6 +61,29 @@ def scan_market():
 
 
             result["symbol"] = symbol
+
+
+
+            # Güçlü sinyal geldiğinde
+
+            if result["score"] >= 85:
+
+
+                # Örnek bakiye
+                # Daha sonra gerçek bakiye API'den alınacak
+
+                amount = calculate_position_size(
+                    1000,
+                    result["price"]
+                )
+
+
+                execute_buy(
+                    symbol,
+                    result["price"],
+                    amount
+                )
+
 
 
             if result["score"] >= 70:
