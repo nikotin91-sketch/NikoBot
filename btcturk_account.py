@@ -6,16 +6,8 @@ import hashlib
 import requests
 
 
-API_KEY = os.getenv(
-    "BTCTURK_API_KEY",
-    ""
-)
-
-SECRET = os.getenv(
-    "BTCTURK_SECRET",
-    ""
-)
-
+API_KEY = os.getenv("BTCTURK_API_KEY","")
+SECRET = os.getenv("BTCTURK_SECRET","")
 
 BASE_URL = "https://api.btcturk.com"
 
@@ -23,78 +15,43 @@ BASE_URL = "https://api.btcturk.com"
 
 def create_headers():
 
-    nonce = str(
-        int(time.time() * 1000)
+    stamp = str(
+        int(time.time()*1000)
     )
 
 
-    print(
-        "API KEY VAR:",
-        bool(API_KEY),
-        flush=True
-    )
-
-    print(
-        "SECRET VAR:",
-        bool(SECRET),
-        flush=True
-    )
-
-
-    message = (
+    data = (
         API_KEY +
-        nonce
+        stamp
     )
 
 
-    try:
-
-        secret_bytes = base64.b64decode(
-            SECRET
-        )
-
-    except Exception:
-
-        secret_bytes = SECRET.encode(
-            "utf-8"
-        )
+    secret = base64.b64decode(
+        SECRET
+    )
 
 
     signature = hmac.new(
-        secret_bytes,
-        message.encode("utf-8"),
+        secret,
+        data.encode("utf-8"),
         hashlib.sha256
     ).digest()
 
 
-
-    signature = base64.b64encode(
-        signature
-    ).decode("utf-8")
-
-
-
-    headers = {
+    return {
 
         "X-PCK": API_KEY,
 
-        "X-Stamp": nonce,
+        "X-Stamp": stamp,
 
-        "X-Signature": signature,
+        "X-Signature": base64.b64encode(
+            signature
+        ).decode(),
 
-        "Content-Type": "application/json"
+        "Content-Type":
+            "application/json"
 
     }
-
-
-    print(
-        "NONCE:",
-        nonce,
-        flush=True
-    )
-
-
-    return headers
 
 
 
@@ -102,89 +59,61 @@ def create_headers():
 def get_balance(asset="TRY"):
 
 
-    url = (
-        BASE_URL +
-        "/api/v1/users/balances"
-    )
-
-
     try:
 
 
-        response = requests.get(
+        url = (
+            BASE_URL +
+            "/api/v1/users/balances"
+        )
 
+
+        r = requests.get(
             url,
-
             headers=create_headers(),
-
-            timeout=15
-
+            timeout=10
         )
 
 
         print(
-            "BALANCE HTTP:",
-            response.status_code,
-            flush=True
+            "BALANCE STATUS:",
+            r.status_code
         )
 
 
         print(
-            "BALANCE RAW:",
-            response.text,
-            flush=True
+            "BALANCE HEADER:",
+            r.headers
+        )
+
+
+        print(
+            "BALANCE TEXT:",
+            r.text
         )
 
 
 
-        if response.status_code != 200:
-
+        if r.status_code != 200:
             return 0
 
 
 
-        if not response.text.strip():
-
-            return 0
+        data = r.json()
 
 
-
-        data = response.json()
-
-
-
-        balances = data.get(
-            "data",
-            []
-        )
-
-
-
-        for item in balances:
+        for item in data.get("data", []):
 
 
             if item.get("asset") == asset:
 
 
-                balance = float(
-
+                return float(
                     item.get(
                         "available",
                         0
                     )
-
                 )
-
-
-                print(
-                    "BAKIYE:",
-                    balance,
-                    asset,
-                    flush=True
-                )
-
-
-                return balance
 
 
 
@@ -196,9 +125,8 @@ def get_balance(asset="TRY"):
 
 
         print(
-            "BALANCE HATA:",
-            e,
-            flush=True
+            "BALANCE ERROR:",
+            e
         )
 
 
