@@ -1,11 +1,12 @@
 from config import TRADING_MODE
 
-from database import (
-    connect
-)
+from database import save_trade
+
+from btcturk_trade import place_order
 
 
-def open_trade(
+
+def execute_buy(
     symbol,
     price,
     amount
@@ -14,15 +15,12 @@ def open_trade(
     if TRADING_MODE == "signal":
 
         print(
-            "SIGNAL MODE:",
-            symbol,
-            price
+            "Sinyal modu:",
+            symbol
         )
 
         return {
-            "status": "signal",
-            "symbol": symbol,
-            "price": price
+            "status": "signal_only"
         }
 
 
@@ -34,92 +32,70 @@ def open_trade(
             "BUY",
             price,
             amount,
-            "OPEN"
+            "PAPER_OPEN"
         )
 
         return {
-            "status": "paper_open",
-            "symbol": symbol,
-            "price": price
+            "status": "paper_buy",
+            "symbol": symbol
         }
+
 
 
 
     if TRADING_MODE == "live":
 
-        # Gerçek emir bağlantısı
-        # BtcTurk private API buraya eklenecek
+        result = place_order(
+            symbol,
+            "BUY",
+            amount,
+            price
+        )
+
+        return result
+
+
+
+
+def execute_sell(
+    symbol,
+    price,
+    amount
+):
+
+
+    if TRADING_MODE == "signal":
 
         return {
-            "status": "live_not_ready"
+            "status": "signal_only"
+        }
+
+
+
+    if TRADING_MODE == "paper":
+
+        save_trade(
+            symbol,
+            "SELL",
+            price,
+            amount,
+            "PAPER_CLOSE"
+        )
+
+        return {
+            "status": "paper_sell"
         }
 
 
 
 
+    if TRADING_MODE == "live":
 
-def close_trade(
-    symbol,
-    price
-):
-
-    save_trade(
-        symbol,
-        "SELL",
-        price,
-        0,
-        "CLOSED"
-    )
-
-
-    return {
-        "status": "closed",
-        "symbol": symbol,
-        "price": price
-    }
-
-
-
-
-
-def save_trade(
-    symbol,
-    side,
-    price,
-    amount,
-    status
-):
-
-    conn = connect()
-
-    cursor = conn.cursor()
-
-
-    cursor.execute(
-        """
-        INSERT INTO trades
-        (
-        symbol,
-        side,
-        price,
-        amount,
-        status,
-        time
-        )
-        VALUES (?,?,?,?,?,datetime('now'))
-        """,
-
-        (
-        symbol,
-        side,
-        price,
-        amount,
-        status
+        result = place_order(
+            symbol,
+            "SELL",
+            amount,
+            price
         )
 
-    )
-
-
-    conn.commit()
-
-    conn.close()
+        return result
