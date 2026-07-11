@@ -1,260 +1,154 @@
 import requests
 import pandas as pd
+import time
 
 
 BASE_URL = "https://api.btcturk.com"
 
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Accept": "application/json"
-}
-
-
-
 def get_markets():
-
-    url = f"{BASE_URL}/api/v2/server/exchangeinfo"
-
 
     print("BtcTurk market çekiliyor...")
 
+    url = f"{BASE_URL}/api/v2/server/exchangeinfo"
 
     try:
+        r = requests.get(url, timeout=15)
 
-        response = requests.get(
-            url,
-            headers=HEADERS,
-            timeout=5
-        )
+        print("Market cevap:", r.status_code)
 
-
-        print(
-            "Market cevap:",
-            response.status_code
-        )
-
-
-        data = response.json()
-
-
-        symbols = (
-            data
-            .get("data", {})
-            .get("symbols", [])
-        )
-
+        data = r.json()
 
         markets = []
 
+        for item in data.get("data", {}).get("symbols", []):
 
-        for item in symbols:
+            symbol = item.get("name")
 
-            name = item.get("name")
-
-
-            if name and name.endswith("TRY"):
-
-                markets.append(name)
+            if symbol and symbol.endswith("TRY"):
+                markets.append(symbol)
 
 
-        print(
-            "Market sayısı:",
-            len(markets)
-        )
-
+        print("Market sayısı:", len(markets))
 
         return markets
 
 
-
     except Exception as e:
 
-        print(
-            "Market hatası:",
-            repr(e)
-        )
+        print("Market hatası:", e)
 
         return []
 
 
 
 
-
-
 def get_ohlc(symbol, limit=100):
 
+    print("Mum isteniyor:", symbol)
 
     url = f"{BASE_URL}/api/v2/ohlc"
 
 
     params = {
-
         "pairSymbol": symbol,
-
         "resolution": "15",
-
         "limit": limit
-
     }
-
 
 
     try:
 
-
-        print(
-            "Mum isteniyor:",
-            symbol
-        )
-
-
-        response = requests.get(
-
+        r = requests.get(
             url,
-
             params=params,
-
-            headers=HEADERS,
-
             timeout=5
-
         )
 
 
         print(
-
             symbol,
-
-            "OHLC cevap:",
-
-            response.status_code
-
+            "mum cevap:",
+            r.status_code
         )
 
 
-
-        data = response.json()
-
+        data = r.json()
 
 
-        candles = data.get(
-            "data",
-            []
-        )
-
+        candles = data.get("data", [])
 
 
         if not candles:
 
-
             print(
                 symbol,
-                "mum bulunamadı"
+                "mum boş"
             )
-
 
             return pd.DataFrame()
 
 
 
-        df = pd.DataFrame(
-            candles
-        )
-
-
-
-        print(
-
-            symbol,
-
-            "mum hazır:",
-
-            len(df)
-
-        )
-
+        df = pd.DataFrame(candles)
 
 
         return df
 
 
 
-    except Exception as e:
-
+    except requests.exceptions.Timeout:
 
         print(
-
             symbol,
-
-            "OHLC hata:",
-
-            repr(e)
-
+            "TIMEOUT"
         )
 
+        return pd.DataFrame()
+
+
+    except Exception as e:
+
+        print(
+            symbol,
+            "mum hata:",
+            e
+        )
 
         return pd.DataFrame()
 
 
 
 
-
-
-
 def get_price(symbol):
-
-
-    url = f"{BASE_URL}/api/v2/ticker"
-
-
 
     try:
 
+        url = f"{BASE_URL}/api/v2/ticker"
 
-        response = requests.get(
 
+        r = requests.get(
             url,
-
             params={
-                "pairSymbol": symbol
+                "pairSymbol":symbol
             },
-
-            headers=HEADERS,
-
             timeout=5
-
         )
 
 
-
-        data = response.json()
-
+        data = r.json()
 
 
-        price = float(
-
+        return float(
             data["data"][0]["last"]
-
         )
-
-
-        return price
-
 
 
     except Exception as e:
 
-
         print(
-
-            symbol,
-
-            "fiyat hata:",
-
-            repr(e)
-
+            "Fiyat hatası:",
+            e
         )
-
 
         return None
