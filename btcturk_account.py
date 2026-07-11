@@ -1,5 +1,6 @@
 import os
 import time
+import base64
 import hmac
 import hashlib
 import requests
@@ -24,13 +25,11 @@ def create_headers():
 
 
     signature = hmac.new(
-        SECRET.encode("utf-8"),
+        base64.b64decode(SECRET),
         message.encode("utf-8"),
         hashlib.sha256
     ).digest()
 
-
-    import base64
 
     signature = base64.b64encode(
         signature
@@ -50,7 +49,12 @@ def create_headers():
     }
 
 
+    print("API KEY VAR:", True)
+    print("SECRET VAR:", True)
+    print("KEY UZUNLUK:", len(API_KEY))
+    print("SECRET UZUNLUK:", len(SECRET))
     print("NONCE:", nonce)
+
 
     return headers
 
@@ -65,12 +69,9 @@ def get_balance(asset="TRY"):
     try:
 
 
-        headers = create_headers()
-
-
         r = requests.get(
             url,
-            headers=headers,
+            headers=create_headers(),
             timeout=10
         )
 
