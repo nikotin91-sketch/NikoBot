@@ -4,7 +4,8 @@ from config import SCAN_INTERVAL
 
 from btcturk_api import (
     get_markets,
-    get_ohlc
+    get_ohlc,
+    get_price
 )
 
 from btcturk_account import (
@@ -27,7 +28,6 @@ from trade_engine import (
 )
 
 
-
 def scan_market():
 
     print("PİYASA TARAMASI BAŞLIYOR")
@@ -39,12 +39,9 @@ def scan_market():
         len(markets)
     )
 
-
     signals = []
 
-
     for symbol in markets:
-
 
         try:
 
@@ -53,20 +50,13 @@ def scan_market():
                 symbol
             )
 
-
             df = get_ohlc(symbol)
-
 
             if df is None:
                 continue
 
-
             if df.empty:
                 continue
-
-
-
-            # Veri kontrolü
 
             required_columns = [
                 "open",
@@ -74,7 +64,6 @@ def scan_market():
                 "low",
                 "close"
             ]
-
 
             if not all(
                 col in df.columns
@@ -88,17 +77,8 @@ def scan_market():
 
                 continue
 
-
-
-            # String gelen fiyatları düzelt
-
             for col in required_columns:
-
                 df[col] = df[col].astype(float)
-
-
-
-            # En az 60 mum şartı
 
             if len(df) < 60:
 
@@ -110,61 +90,45 @@ def scan_market():
 
                 continue
 
-
-
             df = add_indicators(df)
-
-
 
             data = get_latest_analysis(df)
 
-
             if not data:
-
                 continue
 
+            # CANLI FİYATI TICKER'DAN AL
+            live_price = get_price(symbol)
 
+            if live_price is not None:
+                data["price"] = live_price
 
             result = analyze(data)
 
-
-
             if not result:
-
                 continue
 
-
-
             result["symbol"] = symbol
-
-
 
             score = result.get(
                 "score",
                 0
             )
 
-
-
             price = result.get(
                 "price",
                 0
             )
 
-
-
             print(
                 symbol,
                 "SKOR:",
-                score
+                score,
+                "FİYAT:",
+                price
             )
 
-
-
-            # Güçlü sinyal
-
             if score >= 85:
-
 
                 try:
 
@@ -172,12 +136,10 @@ def scan_market():
                         "TRY"
                     )
 
-
                     amount = calculate_position_size(
                         balance,
                         price
                     )
-
 
                     execute_buy(
                         symbol,
@@ -185,12 +147,10 @@ def scan_market():
                         amount
                     )
 
-
                     print(
                         "ALIM:",
                         symbol
                     )
-
 
                 except Exception as e:
 
@@ -199,15 +159,11 @@ def scan_market():
                         e
                     )
 
-
-
-
             if score >= 70:
 
                 signals.append(
                     result
                 )
-
 
                 print(
                     "SİNYAL:",
@@ -216,10 +172,7 @@ def scan_market():
                     score
                 )
 
-
-
         except Exception as e:
-
 
             print(
                 symbol,
@@ -227,51 +180,34 @@ def scan_market():
                 str(e)
             )
 
-
-
     signals.sort(
-        key=lambda x:
-        x.get("score",0),
+        key=lambda x: x.get("score", 0),
         reverse=True
     )
-
-
 
     print(
         "TOPLAM SİNYAL:",
         len(signals)
     )
 
-
     return signals[:10]
-
-
-
-
 
 
 def run():
 
-
     while True:
-
 
         try:
 
             results = scan_market()
 
-
             print(
                 "GÜÇLÜ FIRSATLAR:"
             )
 
-
             for item in results:
 
-                print(
-                    item
-                )
-
+                print(item)
 
         except Exception as e:
 
@@ -280,15 +216,10 @@ def run():
                 e
             )
 
-
         time.sleep(
             SCAN_INTERVAL
         )
 
 
-
-
-
 if __name__ == "__main__":
-
     run()
