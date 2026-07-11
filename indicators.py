@@ -10,9 +10,9 @@ def add_indicators(df):
         df = df.copy()
 
 
-        # Sayısala çevir
+        # Veri tiplerini düzelt
 
-        cols = [
+        columns = [
             "open",
             "high",
             "low",
@@ -21,7 +21,7 @@ def add_indicators(df):
         ]
 
 
-        for col in cols:
+        for col in columns:
 
             if col in df.columns:
 
@@ -36,7 +36,7 @@ def add_indicators(df):
 
 
 
-        # EMA50 için yeterli veri
+        # Minimum mum kontrolü
 
         if len(df) < 60:
 
@@ -91,7 +91,18 @@ def add_indicators(df):
 
 
 
-        # Son boşları temizle
+        # ATR
+
+        df["atr"] = ta.volatility.AverageTrueRange(
+            high=df["high"],
+            low=df["low"],
+            close=df["close"],
+            window=14
+        ).average_true_range()
+
+
+
+        # Ek temizlik
 
         df = df.dropna()
 
@@ -110,7 +121,6 @@ def add_indicators(df):
         )
 
         return pd.DataFrame()
-
 
 
 
@@ -146,7 +156,9 @@ def get_latest_analysis(df):
 
             "macd_signal": float(last["macd_signal"]),
 
-            "macd_hist": float(last["macd_hist"])
+            "macd_hist": float(last["macd_hist"]),
+
+            "atr": float(last["atr"])
 
         }
 
