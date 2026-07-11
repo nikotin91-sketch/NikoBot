@@ -1,51 +1,56 @@
-import time
-import threading
-
 from flask import Flask
+import threading
+import time
+
 
 from database import (
     create_tables,
     save_signal
 )
 
+
 from scanner import (
     scan_market
 )
+
 
 from telegram_bot import (
     send_message,
     format_signal
 )
 
+
 from config import (
     SCAN_INTERVAL
 )
 
 
+
 app = Flask(__name__)
+
 
 
 @app.route("/")
 def home():
 
-    return "BTCTurk AI Scanner V3 aktif"
+    return "BTCTurk AI Scanner V3 Aktif"
 
 
 
 def bot_loop():
 
-    print("🚀 BTCTurk AI Scanner V3 Başladı")
-
-    print("1 - BOT DÖNGÜSÜ BAŞLADI")
+    print(
+        "🚀 BOT BAŞLADI"
+    )
 
 
     try:
 
-        print("2 - DATABASE OLUŞTURULUYOR")
-
         create_tables()
 
-        print("3 - DATABASE HAZIR")
+        print(
+            "DATABASE HAZIR"
+        )
 
 
     except Exception as e:
@@ -63,60 +68,45 @@ def bot_loop():
 
         try:
 
-            print("4 - PİYASA TARAMA BAŞLIYOR")
+            print(
+                "PİYASA TARAMASI BAŞLIYOR"
+            )
 
 
             signals = scan_market()
 
 
             print(
-                "5 - TARAMA BİTTİ. SİNYAL:",
+                "TARAMA BİTTİ:",
                 len(signals)
             )
 
 
-            if signals:
-
-                for signal in signals:
-
-                    print(
-                        "SİNYAL:",
-                        signal
-                    )
+            for signal in signals:
 
 
-                    save_signal(signal)
+                save_signal(
+                    signal
+                )
 
 
-                    message = format_signal(
-                        signal
-                    )
+                message = format_signal(
+                    signal
+                )
 
 
-                    send_message(
-                        message
-                    )
-
-
-            else:
-
-                print(
-                    "Güçlü sinyal yok"
+                send_message(
+                    message
                 )
 
 
         except Exception as e:
 
+
             print(
-                "ANA SİSTEM HATASI:",
+                "BOT HATASI:",
                 e
             )
-
-
-        print(
-            "Bekleme:",
-            SCAN_INTERVAL
-        )
 
 
         time.sleep(
@@ -125,16 +115,19 @@ def bot_loop():
 
 
 
+
 if __name__ == "__main__":
 
 
-    thread = threading.Thread(
-        target=bot_loop,
-        daemon=True
+    worker = threading.Thread(
+        target=bot_loop
     )
 
 
-    thread.start()
+    worker.daemon = True
+
+    worker.start()
+
 
 
     app.run(
