@@ -5,46 +5,37 @@ import pandas as pd
 BASE_URL = "https://api.btcturk.com"
 
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json"
+}
+
+
 
 def get_markets():
 
     url = f"{BASE_URL}/api/v2/server/exchangeinfo"
 
 
-    print(
-        "1 - BtcTurk isteği hazırlanıyor"
-    )
+    print("BtcTurk market çekiliyor...")
 
 
     try:
 
-        print(
-            "2 - BtcTurk isteği gönderiliyor"
-        )
-
-
         response = requests.get(
-
             url,
-
-            headers={
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "application/json"
-            },
-
+            headers=HEADERS,
             timeout=5
-
         )
 
 
         print(
-            "3 - BtcTurk cevap geldi:",
+            "Market cevap:",
             response.status_code
         )
 
 
         data = response.json()
-
 
 
         symbols = (
@@ -59,23 +50,16 @@ def get_markets():
 
         for item in symbols:
 
-
-            name = item.get(
-                "name"
-            )
+            name = item.get("name")
 
 
-            if name and name.endswith(
-                "TRY"
-            ):
+            if name and name.endswith("TRY"):
 
-                markets.append(
-                    name
-                )
+                markets.append(name)
 
 
         print(
-            "4 - Market bulundu:",
+            "Market sayısı:",
             len(markets)
         )
 
@@ -84,26 +68,12 @@ def get_markets():
 
 
 
-    except requests.exceptions.Timeout:
-
-
-        print(
-            "BtcTurk zaman aşımı"
-        )
-
-
-        return []
-
-
-
     except Exception as e:
 
-
         print(
-            "BtcTurk hata:",
+            "Market hatası:",
             repr(e)
         )
-
 
         return []
 
@@ -116,7 +86,6 @@ def get_ohlc(symbol, limit=100):
 
 
     url = f"{BASE_URL}/api/v2/ohlc"
-
 
 
     params = {
@@ -134,18 +103,39 @@ def get_ohlc(symbol, limit=100):
     try:
 
 
+        print(
+            "Mum isteniyor:",
+            symbol
+        )
+
+
         response = requests.get(
 
             url,
 
             params=params,
 
+            headers=HEADERS,
+
             timeout=5
 
         )
 
 
+        print(
+
+            symbol,
+
+            "OHLC cevap:",
+
+            response.status_code
+
+        )
+
+
+
         data = response.json()
+
 
 
         candles = data.get(
@@ -157,13 +147,36 @@ def get_ohlc(symbol, limit=100):
 
         if not candles:
 
+
+            print(
+                symbol,
+                "mum bulunamadı"
+            )
+
+
             return pd.DataFrame()
 
 
 
-        return pd.DataFrame(
+        df = pd.DataFrame(
             candles
         )
+
+
+
+        print(
+
+            symbol,
+
+            "mum hazır:",
+
+            len(df)
+
+        )
+
+
+
+        return df
 
 
 
@@ -171,13 +184,18 @@ def get_ohlc(symbol, limit=100):
 
 
         print(
+
             symbol,
-            "mum hatası:",
+
+            "OHLC hata:",
+
             repr(e)
+
         )
 
 
         return pd.DataFrame()
+
 
 
 
@@ -202,18 +220,26 @@ def get_price(symbol):
                 "pairSymbol": symbol
             },
 
+            headers=HEADERS,
+
             timeout=5
 
         )
+
 
 
         data = response.json()
 
 
 
-        return float(
+        price = float(
+
             data["data"][0]["last"]
+
         )
+
+
+        return price
 
 
 
@@ -221,8 +247,13 @@ def get_price(symbol):
 
 
         print(
-            "Fiyat hatası:",
+
+            symbol,
+
+            "fiyat hata:",
+
             repr(e)
+
         )
 
 
