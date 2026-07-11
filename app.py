@@ -1,5 +1,6 @@
 import time
 import threading
+
 from flask import Flask
 
 from database import (
@@ -22,6 +23,7 @@ from config import (
 
 
 app = Flask(__name__)
+
 
 
 @app.route("/")
