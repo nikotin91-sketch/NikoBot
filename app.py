@@ -127,6 +127,7 @@ if __name__ == "__main__":
     worker.daemon = True
 
     worker.start()
+    time.sleep(2) 
 
 
 
