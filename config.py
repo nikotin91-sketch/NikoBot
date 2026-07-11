@@ -1,21 +1,9 @@
 import os
 
 
-# Telegram ayarları
-
-TELEGRAM_TOKEN = os.getenv(
-    "TELEGRAM_TOKEN",
-    ""
-)
-
-TELEGRAM_CHAT_ID = os.getenv(
-    "TELEGRAM_CHAT_ID",
-    ""
-)
-
-
-
-# BtcTurk API
+# ======================
+# API AYARLARI
+# ======================
 
 BTCTURK_API_KEY = os.getenv(
     "BTCTURK_API_KEY",
@@ -29,7 +17,29 @@ BTCTURK_SECRET = os.getenv(
 
 
 
-# Bot çalışma modu
+# ======================
+# TELEGRAM
+# ======================
+
+TELEGRAM_TOKEN = os.getenv(
+    "TELEGRAM_TOKEN",
+    ""
+)
+
+TELEGRAM_CHAT_ID = os.getenv(
+    "TELEGRAM_CHAT_ID",
+    ""
+)
+
+
+
+# ======================
+# ÇALIŞMA MODU
+# ======================
+
+# signal = sadece alarm
+# paper = sanal işlem
+# live = gerçek işlem
 
 TRADING_MODE = os.getenv(
     "TRADING_MODE",
@@ -38,7 +48,9 @@ TRADING_MODE = os.getenv(
 
 
 
-# AI puan ayarları
+# ======================
+# AI AYARLARI
+# ======================
 
 BUY_SCORE = 85
 
@@ -46,12 +58,16 @@ WATCH_SCORE = 70
 
 
 
-# Risk ayarı
+# ======================
+# RİSK AYARLARI
+# ======================
 
 MAX_POSITION_PERCENT = 10
 
 
 
-# Tarama süresi
+# ======================
+# TARAMA
+# ======================
 
 SCAN_INTERVAL = 900
