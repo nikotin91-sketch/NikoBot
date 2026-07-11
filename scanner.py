@@ -30,6 +30,8 @@ from trade_engine import (
 
 def scan_market():
 
+    print("PİYASA TARAMASI BAŞLIYOR")
+
     markets = get_markets()
 
     print(
@@ -37,85 +39,207 @@ def scan_market():
         len(markets)
     )
 
+
     signals = []
 
 
     for symbol in markets:
 
+
         try:
 
+            print(
+                "OHLC BAŞLADI:",
+                symbol
+            )
+
+
             df = get_ohlc(symbol)
+
+
+            if df is None:
+                continue
 
 
             if df.empty:
                 continue
 
 
+
+            # Veri kontrolü
+
+            required_columns = [
+                "open",
+                "high",
+                "low",
+                "close"
+            ]
+
+
+            if not all(
+                col in df.columns
+                for col in required_columns
+            ):
+
+                print(
+                    symbol,
+                    "eksik kolon"
+                )
+
+                continue
+
+
+
+            # String gelen fiyatları düzelt
+
+            for col in required_columns:
+
+                df[col] = df[col].astype(float)
+
+
+
+            # En az 60 mum şartı
+
+            if len(df) < 60:
+
+                print(
+                    symbol,
+                    "yetersiz mum:",
+                    len(df)
+                )
+
+                continue
+
+
+
             df = add_indicators(df)
+
 
 
             data = get_latest_analysis(df)
 
 
             if not data:
+
                 continue
 
 
+
             result = analyze(data)
+
+
+
+            if not result:
+
+                continue
+
 
 
             result["symbol"] = symbol
 
 
 
-            # Güçlü AI sinyali
+            score = result.get(
+                "score",
+                0
+            )
 
-            if result["score"] >= 85:
 
 
-                balance = get_balance(
-                    "TRY"
+            price = result.get(
+                "price",
+                0
+            )
+
+
+
+            print(
+                symbol,
+                "SKOR:",
+                score
+            )
+
+
+
+            # Güçlü sinyal
+
+            if score >= 85:
+
+
+                try:
+
+                    balance = get_balance(
+                        "TRY"
+                    )
+
+
+                    amount = calculate_position_size(
+                        balance,
+                        price
+                    )
+
+
+                    execute_buy(
+                        symbol,
+                        price,
+                        amount
+                    )
+
+
+                    print(
+                        "ALIM:",
+                        symbol
+                    )
+
+
+                except Exception as e:
+
+                    print(
+                        "TRADE HATASI:",
+                        e
+                    )
+
+
+
+
+            if score >= 70:
+
+                signals.append(
+                    result
                 )
-
-
-                amount = calculate_position_size(
-                    balance,
-                    result["price"]
-                )
-
-
-                execute_buy(
-                    symbol,
-                    result["price"],
-                    amount
-                )
-
-
-
-            if result["score"] >= 70:
-
-                signals.append(result)
 
 
                 print(
+                    "SİNYAL:",
                     symbol,
-                    result["signal"],
-                    result["score"]
+                    result.get("signal"),
+                    score
                 )
+
 
 
         except Exception as e:
 
+
             print(
                 symbol,
                 "hata:",
-                e
+                str(e)
             )
 
 
+
     signals.sort(
-        key=lambda x: x["score"],
+        key=lambda x:
+        x.get("score",0),
         reverse=True
+    )
+
+
+
+    print(
+        "TOPLAM SİNYAL:",
+        len(signals)
     )
 
 
@@ -124,31 +248,44 @@ def scan_market():
 
 
 
+
+
 def run():
+
 
     while True:
 
-        print(
-            "AI Scanner çalışıyor..."
-        )
+
+        try:
+
+            results = scan_market()
 
 
-        results = scan_market()
+            print(
+                "GÜÇLÜ FIRSATLAR:"
+            )
 
 
-        print(
-            "En güçlü fırsatlar:"
-        )
+            for item in results:
+
+                print(
+                    item
+                )
 
 
-        for item in results:
+        except Exception as e:
 
-            print(item)
+            print(
+                "ANA HATA:",
+                e
+            )
 
 
         time.sleep(
             SCAN_INTERVAL
         )
+
+
 
 
 
