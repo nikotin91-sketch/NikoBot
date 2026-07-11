@@ -4,103 +4,123 @@ import ta
 
 def add_indicators(df):
 
-    if df.empty or len(df) < 50:
+    try:
+
+        # BtcTurk kolonlarını düzenle
+        df = df.copy()
+
+
+        for col in [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume"
+        ]:
+
+            if col in df.columns:
+
+                df[col] = pd.to_numeric(
+                    df[col],
+                    errors="coerce"
+                )
+
+
+        df = df.dropna()
+
+
+        if len(df) < 50:
+
+            return pd.DataFrame()
+
+
+
+        df["rsi"] = ta.momentum.RSIIndicator(
+            df["close"],
+            window=14
+        ).rsi()
+
+
+
+        df["ema9"] = ta.trend.EMAIndicator(
+            df["close"],
+            window=9
+        ).ema_indicator()
+
+
+
+        df["ema21"] = ta.trend.EMAIndicator(
+            df["close"],
+            window=21
+        ).ema_indicator()
+
+
+
+        macd = ta.trend.MACD(
+            df["close"]
+        )
+
+
+        df["macd"] = macd.macd()
+
+        df["macd_signal"] = macd.macd_signal()
+
+
+
+        df = df.dropna()
+
+
         return df
 
 
-    # RSI
-    df["rsi"] = ta.momentum.RSIIndicator(
-        df["close"],
-        window=14
-    ).rsi()
 
+    except Exception as e:
 
-    # EMA
-    df["ema9"] = ta.trend.EMAIndicator(
-        df["close"],
-        window=9
-    ).ema_indicator()
+        print(
+            "INDICATOR HATA:",
+            e,
+            flush=True
+        )
 
-    df["ema21"] = ta.trend.EMAIndicator(
-        df["close"],
-        window=21
-    ).ema_indicator()
+        return pd.DataFrame()
 
-    df["ema50"] = ta.trend.EMAIndicator(
-        df["close"],
-        window=50
-    ).ema_indicator()
-
-
-    # MACD
-
-    macd = ta.trend.MACD(
-        df["close"],
-        window_fast=12,
-        window_slow=26,
-        window_sign=9
-    )
-
-    df["macd"] = macd.macd()
-    df["macd_signal"] = macd.macd_signal()
-    df["macd_hist"] = macd.macd_diff()
-
-
-    # ATR
-
-    atr = ta.volatility.AverageTrueRange(
-        high=df["high"],
-        low=df["low"],
-        close=df["close"],
-        window=14
-    )
-
-    df["atr"] = atr.average_true_range()
-
-
-    # Hacim ortalaması
-
-    df["volume_avg"] = (
-        df["volume"]
-        .rolling(20)
-        .mean()
-    )
-
-    df["volume_ratio"] = (
-        df["volume"] /
-        df["volume_avg"]
-    )
-
-
-    return df
 
 
 
 def get_latest_analysis(df):
 
-    if df.empty:
-        return {}
+    try:
+
+        if df.empty:
+            return None
 
 
-    last = df.iloc[-1]
+        last = df.iloc[-1]
 
 
-    return {
+        return {
 
-        "price": float(last["close"]),
+            "price": float(last["close"]),
 
-        "rsi": float(last["rsi"]),
+            "rsi": float(last["rsi"]),
 
-        "ema9": float(last["ema9"]),
-        "ema21": float(last["ema21"]),
-        "ema50": float(last["ema50"]),
+            "ema9": float(last["ema9"]),
 
-        "macd": float(last["macd"]),
-        "macd_signal": float(last["macd_signal"]),
+            "ema21": float(last["ema21"]),
 
-        "atr": float(last["atr"]),
+            "macd": float(last["macd"]),
 
-        "volume_ratio":
-            float(last["volume_ratio"])
+            "macd_signal": float(last["macd_signal"])
 
-    }
+        }
+
+
+    except Exception as e:
+
+        print(
+            "ANALYSIS HATA:",
+            e,
+            flush=True
+        )
+
+        return None
