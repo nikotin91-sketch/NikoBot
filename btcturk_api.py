@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 
 BASE_URL = "https://api.btcturk.com"
+GRAPH_URL = "https://graph-api.btcturk.com"
 
 
 def get_markets():
@@ -43,13 +44,17 @@ def get_ohlc(symbol, limit=100):
 
     try:
 
+        url = f"{GRAPH_URL}/v1/ohlcs"
+
+        params = {
+            "pairSymbol": symbol,
+            "resolution": "15",
+            "last": limit
+        }
+
         r = requests.get(
-            f"{BASE_URL}/api/v2/ohlc",
-            params={
-                "pairSymbol": symbol,
-                "resolution": "15",
-                "limit": limit
-            },
+            url,
+            params=params,
             timeout=10
         )
 
@@ -58,7 +63,7 @@ def get_ohlc(symbol, limit=100):
         if r.status_code != 200:
             return pd.DataFrame()
 
-        candles = r.json().get("data", [])
+        candles = r.json()
 
         if not candles:
             return pd.DataFrame()
@@ -75,19 +80,29 @@ def get_ohlc(symbol, limit=100):
 
         df.rename(columns=rename, inplace=True)
 
-        required = ["open", "high", "low", "close", "volume"]
+        required = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume"
+        ]
 
         for col in required:
+
             if col not in df.columns:
                 return pd.DataFrame()
 
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+            df[col] = pd.to_numeric(
+                df[col],
+                errors="coerce"
+            )
 
         df.dropna(inplace=True)
         df.reset_index(drop=True, inplace=True)
 
         print(
-            f"{symbol} SON FİYAT: {df.iloc[-1]['close']}",
+            f"{symbol} SON MUM: {df.iloc[-1]['close']}",
             flush=True
         )
 
@@ -95,7 +110,12 @@ def get_ohlc(symbol, limit=100):
 
     except Exception as e:
 
-        print("OHLC HATA:", symbol, e, flush=True)
+        print(
+            "OHLC HATA:",
+            symbol,
+            e,
+            flush=True
+        )
 
         return pd.DataFrame()
 
@@ -112,12 +132,31 @@ def get_price(symbol):
             timeout=5
         )
 
-        data = r.json()["data"][0]
+        if r.status_code != 200:
+            return None
 
-        return float(data["last"])
+        data = r.json()
+
+        if not data.get("data"):
+            return None
+
+        price = float(
+            data["data"][0]["last"]
+        )
+
+        print(
+            f"{symbol} CANLI FİYAT: {price}",
+            flush=True
+        )
+
+        return price
 
     except Exception as e:
 
-        print("PRICE HATA:", e, flush=True)
+        print(
+            "PRICE HATA:",
+            e,
+            flush=True
+        )
 
         return None
