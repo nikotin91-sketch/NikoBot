@@ -5,11 +5,6 @@ import pandas as pd
 BASE_URL = "https://api.btcturk.com"
 
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0"
-}
-
-
 
 def get_markets():
 
@@ -17,26 +12,39 @@ def get_markets():
 
 
     print(
-        "BtcTurk bağlantı testi başladı"
+        "1 - BtcTurk isteği hazırlanıyor"
     )
 
 
     try:
 
+        print(
+            "2 - BtcTurk isteği gönderiliyor"
+        )
+
+
         response = requests.get(
+
             url,
-            headers=HEADERS,
+
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json"
+            },
+
             timeout=5
+
         )
 
 
         print(
-            "BtcTurk cevap:",
+            "3 - BtcTurk cevap geldi:",
             response.status_code
         )
 
 
         data = response.json()
+
 
 
         symbols = (
@@ -67,7 +75,7 @@ def get_markets():
 
 
         print(
-            "Market sayısı:",
+            "4 - Market bulundu:",
             len(markets)
         )
 
@@ -76,11 +84,23 @@ def get_markets():
 
 
 
+    except requests.exceptions.Timeout:
+
+
+        print(
+            "BtcTurk zaman aşımı"
+        )
+
+
+        return []
+
+
+
     except Exception as e:
 
 
         print(
-            "BTC API HATA:",
+            "BtcTurk hata:",
             repr(e)
         )
 
@@ -96,6 +116,7 @@ def get_ohlc(symbol, limit=100):
 
 
     url = f"{BASE_URL}/api/v2/ohlc"
+
 
 
     params = {
@@ -119,15 +140,12 @@ def get_ohlc(symbol, limit=100):
 
             params=params,
 
-            headers=HEADERS,
-
             timeout=5
 
         )
 
 
         data = response.json()
-
 
 
         candles = data.get(
@@ -143,12 +161,9 @@ def get_ohlc(symbol, limit=100):
 
 
 
-        df = pd.DataFrame(
+        return pd.DataFrame(
             candles
         )
-
-
-        return df
 
 
 
@@ -157,7 +172,7 @@ def get_ohlc(symbol, limit=100):
 
         print(
             symbol,
-            "OHLC HATA:",
+            "mum hatası:",
             repr(e)
         )
 
@@ -187,8 +202,6 @@ def get_price(symbol):
                 "pairSymbol": symbol
             },
 
-            headers=HEADERS,
-
             timeout=5
 
         )
@@ -208,7 +221,7 @@ def get_price(symbol):
 
 
         print(
-            "Fiyat alma hatası:",
+            "Fiyat hatası:",
             repr(e)
         )
 
