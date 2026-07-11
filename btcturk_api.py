@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 
 BASE_URL = "https://api.btcturk.com"
-GRAPH_URL = "https://graph-api.btcturk.com"
 
 
 def get_markets():
@@ -15,6 +14,8 @@ def get_markets():
             f"{BASE_URL}/api/v2/server/exchangeinfo",
             timeout=10
         )
+
+        print("Market cevap:", r.status_code, flush=True)
 
         data = r.json()
 
@@ -44,65 +45,49 @@ def get_ohlc(symbol, limit=100):
 
     try:
 
-        url = f"{GRAPH_URL}/v1/ohlcs"
+        url = f"{BASE_URL}/api/v2/ohlc"
 
         params = {
             "pairSymbol": symbol,
             "resolution": "15",
-            "last": limit
+            "limit": limit
         }
+
+        print("İSTEK ATILIYOR:", symbol, flush=True)
 
         r = requests.get(
             url,
             params=params,
-            timeout=10
+            timeout=5
         )
 
-        print("OHLC DURUM:", symbol, r.status_code, flush=True)
+        print(
+            "OHLC DURUM:",
+            symbol,
+            r.status_code,
+            flush=True
+        )
 
-        if r.status_code != 200:
-            return pd.DataFrame()
+        data = r.json()
 
-        candles = r.json()
+        candles = data.get("data")
 
         if not candles:
+
+            print(
+                "VERİ YOK:",
+                symbol,
+                flush=True
+            )
+
             return pd.DataFrame()
 
         df = pd.DataFrame(candles)
 
-        rename = {
-            "o": "open",
-            "h": "high",
-            "l": "low",
-            "c": "close",
-            "v": "volume"
-        }
-
-        df.rename(columns=rename, inplace=True)
-
-        required = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume"
-        ]
-
-        for col in required:
-
-            if col not in df.columns:
-                return pd.DataFrame()
-
-            df[col] = pd.to_numeric(
-                df[col],
-                errors="coerce"
-            )
-
-        df.dropna(inplace=True)
-        df.reset_index(drop=True, inplace=True)
-
         print(
-            f"{symbol} SON MUM: {df.iloc[-1]['close']}",
+            "MUM TAMAM:",
+            symbol,
+            len(df),
             flush=True
         )
 
@@ -132,24 +117,11 @@ def get_price(symbol):
             timeout=5
         )
 
-        if r.status_code != 200:
-            return None
-
         data = r.json()
 
-        if not data.get("data"):
-            return None
-
-        price = float(
+        return float(
             data["data"][0]["last"]
         )
-
-        print(
-            f"{symbol} CANLI FİYAT: {price}",
-            flush=True
-        )
-
-        return price
 
     except Exception as e:
 
