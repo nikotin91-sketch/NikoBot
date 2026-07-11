@@ -7,6 +7,10 @@ from btcturk_api import (
     get_ohlc
 )
 
+from btcturk_account import (
+    get_balance
+)
+
 from indicators import (
     add_indicators,
     get_latest_analysis
@@ -64,16 +68,18 @@ def scan_market():
 
 
 
-            # Güçlü sinyal geldiğinde
+            # Güçlü AI sinyali
 
             if result["score"] >= 85:
 
 
-                # Örnek bakiye
-                # Daha sonra gerçek bakiye API'den alınacak
+                balance = get_balance(
+                    "TRY"
+                )
+
 
                 amount = calculate_position_size(
-                    1000,
+                    balance,
                     result["price"]
                 )
 
