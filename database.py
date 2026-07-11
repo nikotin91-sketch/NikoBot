@@ -183,6 +183,70 @@ def recent_signal(symbol):
 
 
 
+def can_send_signal(symbol, signal, cooldown=300):
+
+    conn = connect()
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT time
+        FROM signals
+        WHERE symbol=?
+        AND signal=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+
+        (
+            symbol,
+            signal
+        )
+    )
+
+
+    result = cursor.fetchone()
+
+
+    conn.close()
+
+
+
+    if not result:
+
+        return True
+
+
+
+    last_time = datetime.fromisoformat(
+        result[0]
+    )
+
+
+
+    now = datetime.now()
+
+
+
+    diff = (
+        now - last_time
+    ).total_seconds()
+
+
+
+    if diff >= cooldown:
+
+        return True
+
+
+
+    return False
+
+
+
+
 def get_trades():
 
     conn = connect()
