@@ -36,26 +36,41 @@ def bot_loop():
 
     print("🚀 BTCTurk AI Scanner V3 Başladı")
 
-    print("BOT DÖNGÜSÜ BAŞLADI")
+    print("1 - BOT DÖNGÜSÜ BAŞLADI")
 
 
-    create_tables()
+    try:
 
-    print("DATABASE HAZIR")
+        print("2 - DATABASE OLUŞTURULUYOR")
+
+        create_tables()
+
+        print("3 - DATABASE HAZIR")
+
+
+    except Exception as e:
+
+        print(
+            "DATABASE HATASI:",
+            e
+        )
+
+        return
+
 
 
     while True:
 
         try:
 
-            print("Piyasa taranıyor...")
+            print("4 - PİYASA TARAMA BAŞLIYOR")
 
 
             signals = scan_market()
 
 
             print(
-                "Bulunan sinyal:",
+                "5 - TARAMA BİTTİ. SİNYAL:",
                 len(signals)
             )
 
@@ -65,14 +80,12 @@ def bot_loop():
                 for signal in signals:
 
                     print(
-                        "Sinyal:",
+                        "SİNYAL:",
                         signal
                     )
 
 
-                    save_signal(
-                        signal
-                    )
+                    save_signal(signal)
 
 
                     message = format_signal(
@@ -95,15 +108,14 @@ def bot_loop():
         except Exception as e:
 
             print(
-                "Ana sistem hatası:",
+                "ANA SİSTEM HATASI:",
                 e
             )
 
 
         print(
             "Bekleme:",
-            SCAN_INTERVAL,
-            "saniye"
+            SCAN_INTERVAL
         )
 
 
