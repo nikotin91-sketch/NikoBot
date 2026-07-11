@@ -6,66 +6,60 @@ import hashlib
 import requests
 
 
-API_KEY = os.getenv("BTCTURK_API_KEY","")
-SECRET = os.getenv("BTCTURK_SECRET","")
+API_KEY = os.getenv("BTCTURK_API_KEY")
+SECRET = os.getenv("BTCTURK_SECRET")
 
 BASE_URL = "https://api.btcturk.com"
 
 
-
 def create_headers():
 
-    stamp = str(
-        int(time.time()*1000)
-    )
+    if not API_KEY or not SECRET:
+        print("API KEY veya SECRET yok")
+        return {}
 
+    nonce = str(int(time.time() * 1000))
 
-    data = (
-        API_KEY +
-        stamp
-    )
-
-
-    secret = base64.b64decode(
-        SECRET
-    )
-
+    message = API_KEY + nonce
 
     signature = hmac.new(
-        secret,
-        data.encode("utf-8"),
+        base64.b64decode(SECRET),
+        message.encode("utf-8"),
         hashlib.sha256
     ).digest()
 
 
-    return {
+    signature = base64.b64encode(
+        signature
+    ).decode("utf-8")
+
+
+    headers = {
 
         "X-PCK": API_KEY,
 
-        "X-Stamp": stamp,
+        "X-Stamp": nonce,
 
-        "X-Signature": base64.b64encode(
-            signature
-        ).decode(),
+        "X-Signature": signature,
 
-        "Content-Type":
-            "application/json"
+        "Content-Type": "application/json"
 
     }
 
+
+    print("NONCE:", nonce)
+
+    return headers
 
 
 
 def get_balance(asset="TRY"):
 
 
+    url = BASE_URL + "/api/v1/users/balances"
+
+
     try:
-
-
-        url = (
-            BASE_URL +
-            "/api/v1/users/balances"
-        )
 
 
         r = requests.get(
@@ -81,20 +75,13 @@ def get_balance(asset="TRY"):
         )
 
 
-        print(
-            "BALANCE HEADER:",
-            r.headers
-        )
-
-
-        print(
-            "BALANCE TEXT:",
-            r.text
-        )
-
-
-
         if r.status_code != 200:
+
+            print(
+                "BALANCE RAW:",
+                r.text
+            )
+
             return 0
 
 
@@ -102,7 +89,13 @@ def get_balance(asset="TRY"):
         data = r.json()
 
 
-        for item in data.get("data", []):
+        balances = data.get(
+            "data",
+            []
+        )
+
+
+        for item in balances:
 
 
             if item.get("asset") == asset:
@@ -125,9 +118,8 @@ def get_balance(asset="TRY"):
 
 
         print(
-            "BALANCE ERROR:",
+            "BALANCE HATA:",
             e
         )
-
 
         return 0
