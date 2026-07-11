@@ -8,6 +8,10 @@ from btcturk_api import (
     get_price
 )
 
+from database import (
+    can_send_signal
+)
+
 from indicators import (
     add_indicators,
     get_latest_analysis
@@ -20,19 +24,24 @@ def scan_market():
 
     print("PİYASA TARAMASI BAŞLIYOR")
 
+
     markets = get_markets()
+
 
     print(
         "Taranan market:",
         len(markets)
     )
 
+
     signals = []
 
 
     for symbol in markets:
 
+
         try:
+
 
             print(
                 "OHLC BAŞLADI:",
@@ -43,8 +52,13 @@ def scan_market():
             df = get_ohlc(symbol)
 
 
-            if df is None or df.empty:
+            if df is None:
                 continue
+
+
+            if df.empty:
+                continue
+
 
 
             required_columns = [
@@ -53,6 +67,7 @@ def scan_market():
                 "low",
                 "close"
             ]
+
 
 
             if not all(
@@ -70,11 +85,13 @@ def scan_market():
 
 
             for col in required_columns:
+
                 df[col] = df[col].astype(float)
 
 
 
             if len(df) < 60:
+
 
                 print(
                     symbol,
@@ -89,15 +106,19 @@ def scan_market():
             df = add_indicators(df)
 
 
+
             data = get_latest_analysis(df)
 
 
+
             if not data:
+
                 continue
 
 
 
             live_price = get_price(symbol)
+
 
 
             if live_price is not None:
@@ -109,12 +130,15 @@ def scan_market():
             result = analyze(data)
 
 
+
             if not result:
+
                 continue
 
 
 
             result["symbol"] = symbol
+
 
 
             score = result.get(
@@ -129,6 +153,7 @@ def scan_market():
             )
 
 
+
             print(
                 symbol,
                 "SKOR:",
@@ -139,23 +164,47 @@ def scan_market():
 
 
 
-            # SADECE SİNYAL ÜRET
             if score >= 70:
 
-                signals.append(
-                    result
+
+                signal_type = result.get(
+                    "signal",
+                    "UNKNOWN"
                 )
 
 
-                print(
-                    "SİNYAL:",
+                if can_send_signal(
                     symbol,
-                    result.get("signal"),
-                    score
-                )
+                    signal_type,
+                    300
+                ):
+
+
+                    signals.append(
+                        result
+                    )
+
+
+                    print(
+                        "SİNYAL:",
+                        symbol,
+                        signal_type,
+                        score
+                    )
+
+
+                else:
+
+
+                    print(
+                        symbol,
+                        "tekrar sinyal engellendi"
+                    )
+
 
 
         except Exception as e:
+
 
             print(
                 symbol,
@@ -166,9 +215,10 @@ def scan_market():
 
 
     signals.sort(
-        key=lambda x: x.get("score",0),
+        key=lambda x: x.get("score", 0),
         reverse=True
     )
+
 
 
     print(
@@ -177,17 +227,23 @@ def scan_market():
     )
 
 
+
     return signals[:10]
+
 
 
 
 def run():
 
+
     while True:
+
 
         try:
 
+
             results = scan_market()
+
 
 
             print(
@@ -195,17 +251,21 @@ def run():
             )
 
 
+
             for item in results:
 
                 print(item)
 
 
+
         except Exception as e:
+
 
             print(
                 "ANA HATA:",
                 e
             )
+
 
 
         time.sleep(
@@ -215,4 +275,5 @@ def run():
 
 
 if __name__ == "__main__":
+
     run()
