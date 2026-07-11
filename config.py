@@ -70,4 +70,4 @@ MAX_POSITION_PERCENT = 10
 # TARAMA
 # ======================
 
-SCAN_INTERVAL = 900
+SCAN_INTERVAL = 60
