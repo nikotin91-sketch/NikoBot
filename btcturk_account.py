@@ -6,8 +6,8 @@ import hashlib
 import requests
 
 
-API_KEY = os.getenv("BTCTURK_API_KEY")
-SECRET = os.getenv("BTCTURK_SECRET")
+API_KEY = os.getenv("BTCTURK_API_KEY", "")
+SECRET = os.getenv("BTCTURK_SECRET", "")
 
 BASE_URL = "https://api.btcturk.com"
 
@@ -20,13 +20,20 @@ def create_headers():
 
     nonce = str(int(time.time() * 1000))
 
-    message = API_KEY + nonce
+    message = nonce + API_KEY
 
-    signature = hmac.new(
-        base64.b64decode(SECRET),
-        message.encode("utf-8"),
-        hashlib.sha256
-    ).digest()
+    try:
+
+        signature = hmac.new(
+            base64.b64decode(SECRET),
+            message.encode("utf-8"),
+            hashlib.sha256
+        ).digest()
+
+    except Exception as e:
+
+        print("SIGNATURE HATA:", e)
+        return {}
 
 
     signature = base64.b64encode(
@@ -47,6 +54,8 @@ def create_headers():
     }
 
 
+    print("API KEY VAR:", bool(API_KEY))
+    print("SECRET VAR:", bool(SECRET))
     print("NONCE:", nonce)
 
     return headers
@@ -55,12 +64,10 @@ def create_headers():
 
 def get_balance(asset="TRY"):
 
-
     url = BASE_URL + "/api/v1/users/balances"
 
 
     try:
-
 
         r = requests.get(
             url,
@@ -75,31 +82,22 @@ def get_balance(asset="TRY"):
         )
 
 
+        print(
+            "BALANCE TEXT:",
+            r.text
+        )
+
+
         if r.status_code != 200:
-
-            print(
-                "BALANCE RAW:",
-                r.text
-            )
-
             return 0
-
 
 
         data = r.json()
 
 
-        balances = data.get(
-            "data",
-            []
-        )
-
-
-        for item in balances:
-
+        for item in data.get("data", []):
 
             if item.get("asset") == asset:
-
 
                 return float(
                     item.get(
@@ -109,13 +107,10 @@ def get_balance(asset="TRY"):
                 )
 
 
-
         return 0
 
 
-
     except Exception as e:
-
 
         print(
             "BALANCE HATA:",
