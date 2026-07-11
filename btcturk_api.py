@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 
-
 BASE_URL = "https://api.btcturk.com"
 
 
@@ -16,8 +15,6 @@ def get_markets():
             timeout=10
         )
 
-        print("Market cevap:", r.status_code, flush=True)
-
         data = r.json()
 
         markets = []
@@ -29,11 +26,9 @@ def get_markets():
             if name and name.endswith("TRY"):
                 markets.append(name)
 
-
         print("Market sayısı:", len(markets), flush=True)
 
         return markets
-
 
     except Exception as e:
 
@@ -42,87 +37,67 @@ def get_markets():
         return []
 
 
-
-
 def get_ohlc(symbol, limit=100):
 
     print("OHLC BAŞLADI:", symbol, flush=True)
 
-
     try:
 
-        url = f"{BASE_URL}/api/v2/ohlc"
-
-
-        params = {
-            "pairSymbol": symbol,
-            "resolution": "15",
-            "limit": limit
-        }
-
-
-        print("İSTEK ATILIYOR:", symbol, flush=True)
-
-
         r = requests.get(
-            url,
-            params=params,
-            timeout=5
+            f"{BASE_URL}/api/v2/ohlc",
+            params={
+                "pairSymbol": symbol,
+                "resolution": "15",
+                "limit": limit
+            },
+            timeout=10
         )
 
+        print("OHLC DURUM:", symbol, r.status_code, flush=True)
 
-        print(
-            "OHLC DURUM:",
-            symbol,
-            r.status_code,
-            flush=True
-        )
-
-
-        data = r.json()
-
-
-        candles = data.get("data")
-
-
-        if not candles:
-
-            print(
-                "VERİ YOK:",
-                symbol,
-                flush=True
-            )
-
+        if r.status_code != 200:
             return pd.DataFrame()
 
+        candles = r.json().get("data", [])
+
+        if not candles:
+            return pd.DataFrame()
 
         df = pd.DataFrame(candles)
 
+        rename = {
+            "o": "open",
+            "h": "high",
+            "l": "low",
+            "c": "close",
+            "v": "volume"
+        }
+
+        df.rename(columns=rename, inplace=True)
+
+        required = ["open", "high", "low", "close", "volume"]
+
+        for col in required:
+            if col not in df.columns:
+                return pd.DataFrame()
+
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
 
         print(
-            "MUM TAMAM:",
-            symbol,
-            len(df),
+            f"{symbol} SON FİYAT: {df.iloc[-1]['close']}",
             flush=True
         )
-
 
         return df
 
-
-
     except Exception as e:
 
-        print(
-            "OHLC HATA:",
-            symbol,
-            e,
-            flush=True
-        )
+        print("OHLC HATA:", symbol, e, flush=True)
 
         return pd.DataFrame()
-
-
 
 
 def get_price(symbol):
@@ -137,20 +112,12 @@ def get_price(symbol):
             timeout=5
         )
 
+        data = r.json()["data"][0]
 
-        data = r.json()
-
-        return float(
-            data["data"][0]["last"]
-        )
-
+        return float(data["last"])
 
     except Exception as e:
 
-        print(
-            "PRICE HATA:",
-            e,
-            flush=True
-        )
+        print("PRICE HATA:", e, flush=True)
 
         return None
